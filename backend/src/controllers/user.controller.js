@@ -3,28 +3,28 @@ import {ApiError} from "../utils/ApiError.js"
 import {User} from "../models/user.models.js"
 // import {uploadOnCloudinary} from "../utils/claudinary.js"
 import {ApiResponse} from "../utils/ApiResponse.js"
-// import jwt from "jsonwebtoken"
+import jwt from "jsonwebtoken"
 
 
 
-// const generateAccessAndRefereshTokens = async(userId) =>{
-//     try {
-//         const user = await User.findById(userId)
+const generateAccessAndRefereshTokens = async(userId) =>{
+    try {
+        const user = await User.findById(userId)
    
-//         const accessToken = user.generateAccessToken()
+        const accessToken = user.generateAccessToken()
         
-//         const refreshToken = user.generateRefreshToken()
+        const refreshToken = user.generateRefreshToken()
         
-//         user.refreshToken = refreshToken
-//         await user.save({ validateBeforeSave: false })
+        user.refreshToken = refreshToken
+        await user.save({ validateBeforeSave: false })
 
-//         return {accessToken, refreshToken}
+        return {accessToken, refreshToken}
 
 
-//     } catch (error) {
-//         throw new ApiError(500, "Something went wrong while generating referesh and access token")
-//     }
-// }
+    } catch (error) {
+        throw new ApiError(500, "Something went wrong while generating referesh and access token")
+    }
+}
 
 
 const registerUser = asyncHandler(async (req, res) => {
@@ -73,4 +73,37 @@ const registerUser = asyncHandler(async (req, res) => {
 });
 
 
+const loginUser = asyncHandler(async(req,res)=>{
+const{email,username,password}=req.body
+
+if(!username && !email){
+    throw new ApiError(400, "Either email or username is required");
+
+}
+const user =await User.findOne({
+    $or: [{ email }, { username }]
+})
+if(!user){
+    throw new ApiError(401, "user has not been registered");
+}
+const isPasswordValid =await user.isPasswordCorrect(password)
+if(!isPasswordValid){
+    throw new ApiError(401, "Invalid password");
+}
+const {accessToken,refreshToken}= await generateAccessAndRefereshTokens(user._id)
+const loggedInUser = await User.findById(user._id).select("-password -refershToken")
+const cookiesOption ={
+    httpOnly: true,
+    maxAge: 30 * 24 * 60 * 60 * 1000,
+    secure: true,
+}
+
+return res 
+.status(200)
+.cookie("accessToken",accessToken,cookiesOption)
+.cookie("refreshTokeb",refreshToken,cookiesOption)
+})
+
+
 export {registerUser}
+export{loginUser}
