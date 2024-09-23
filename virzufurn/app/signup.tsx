@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, Animated, Keyboard } from 'react-native';
+import { View, Text, TextInput, StyleSheet, TouchableOpacity, Animated, Keyboard, ActivityIndicator } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import axios from 'axios';
+
 const Signup = () => {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const [fullname, setFullname] = useState('');
+  const [fullName, setFullName] = useState('');
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -22,8 +23,8 @@ const Signup = () => {
     return regex.test(email);
   };
 
-  const handleSignUp = () => {
-    if (!fullname || !username || !email || !password) {
+  const handleSignUp = async () => {
+    if (!fullName || !username || !email || !password) {
       setErrorMessage('Please enter all the fields');
       shakeAnimation();
       return;
@@ -36,16 +37,44 @@ const Signup = () => {
     }
 
     setErrorMessage('');
-    setIsloading(true);
-    try{
-      const response = await axios.post('http://localhost:8000/api/v1/users/register',{
-        fullname,
+    setIsLoading(true);
+
+    try {
+      const response = await axios.post('http://localhost:8000/api/v1/users/register', {
+        fullName,
         username,
         email,
         password
-      })
+      });
+
+      if (response.status === 201) {
+        // Successful registration
+        router.navigate('/home');
+      } else {
+        // Handle unexpected status codes
+        setErrorMessage('An unexpected error occurred. Please try again.');
+        shakeAnimation();
+      }
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        if (error.response) {
+          // The request was made and the server responded with a status code
+          // that falls out of the range of 2xx
+          setErrorMessage(error.response.data.message || 'Registration failed. Please try again.');
+        } else if (error.request) {
+          // The request was made but no response was received
+          setErrorMessage('No response from server. Please check your internet connection.');
+        } else {
+          // Something happened in setting up the request that triggered an Error
+          setErrorMessage('An error occurred. Please try again.');
+        }
+      } else {
+        setErrorMessage('An unexpected error occurred. Please try again.');
+      }
+      shakeAnimation();
+    } finally {
+      setIsLoading(false);
     }
-    router.navigate('/home');
   };
 
   const handleLogin = () => {
@@ -80,9 +109,9 @@ const Signup = () => {
               style={styles.input}
               placeholder="Fullname"
               placeholderTextColor="#ccc"
-              value={fullname}
+              value={fullName}
               onChangeText={(text) => {
-                setFullname(text);
+                setFullName(text);
                 if (errorMessage) setErrorMessage('');
               }}
               autoCapitalize="words"
@@ -145,8 +174,16 @@ const Signup = () => {
 
           {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
 
-          <TouchableOpacity style={styles.signupButton} onPress={handleSignUp}>
-            <Text style={styles.signupButtonText}>Sign Up</Text>
+          <TouchableOpacity 
+            style={[styles.signupButton, isLoading && styles.disabledButton]} 
+            onPress={handleSignUp}
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <ActivityIndicator color="#4c669f" />
+            ) : (
+              <Text style={styles.signupButtonText}>Sign Up</Text>
+            )}
           </TouchableOpacity>
 
           <TouchableOpacity onPress={handleLogin}>
@@ -217,6 +254,9 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 40,
     marginTop: 10,
+  },
+  disabledButton: {
+    opacity: 0.7,
   },
   signupButtonText: {
     color: '#4c669f',
