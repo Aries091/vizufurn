@@ -28,17 +28,21 @@ const generateAccessAndRefereshTokens = async(userId) =>{
 
 
 const registerUser = asyncHandler(async (req, res) => {
-    const { fullName, username, email, password } = req.body;
-    console.log("Request Body:", req.body);
+    const { fullName, username, email, password, role } = req.body;
 
     // Check if all required fields are present
-    if (!fullName || !username || !email || !password) {
+    if (!fullName || !username || !email || !password || !role) {
         throw new ApiError(400, "All fields are required");
     }
 
     // Check if any field is empty after trimming
-    if ([fullName, username, email, password].some((field) => field.trim() === "")) {
+    if ([fullName, username, email, password, role].some((field) => field.trim() === "")) {
         throw new ApiError(400, "All fields are required and cannot be empty");
+    }
+
+    // Validate role
+    if (!['customer', 'seller'].includes(role)) {
+        throw new ApiError(400, "Invalid role. Must be either 'customer' or 'seller'");
     }
 
     const existedUser = await User.findOne({
@@ -57,6 +61,7 @@ const registerUser = asyncHandler(async (req, res) => {
         username: lowercaseUsername,
         email,
         password,
+        role
     });
 
     const createdUser = await User.findById(user._id).select(
@@ -73,36 +78,59 @@ const registerUser = asyncHandler(async (req, res) => {
 });
 
 
-const loginUser = asyncHandler(async(req,res)=>{
-const{email,username,password}=req.body
 
-if(!username && !email){
-    throw new ApiError(400, "Either email or username is required");
+const loginUser = asyncHandler(async (req, res) => {
+    const { email, username, password } = req.body;
 
-}
-const user =await User.findOne({
-    $or: [{ email }, { username }]
-})
-if(!user){
-    throw new ApiError(401, "user has not been registered");
-}
-const isPasswordValid =await user.isPasswordCorrect(password)
-if(!isPasswordValid){
-    throw new ApiError(401, "Invalid password");
-}
-const {accessToken,refreshToken}= await generateAccessAndRefereshTokens(user._id)
-const loggedInUser = await User.findById(user._id).select("-password -refershToken")
-const cookiesOption ={
-    httpOnly: true,
-    maxAge: 30 * 24 * 60 * 60 * 1000,
-    secure: true,
-}
+    if (!username && !email) {
+        throw new ApiError(400, "Either email or username is required");
+    }
 
-return res 
-.status(200)
-.cookie("accessToken",accessToken,cookiesOption)
-.cookie("refreshTokeb",refreshToken,cookiesOption)
-})
+    const user = await User.findOne({
+        $or: [{ email }, { username }]
+    });
+
+    if (!user) {
+        throw new ApiError(401, "User has not been registered");
+    }
+
+    const isPasswordValid = await user.isPasswordCorrect(password);
+    if (!isPasswordValid) {
+        throw new ApiError(401, "Invalid password");
+    }
+
+    const { accessToken, refreshToken } = await generateAccessAndRefereshTokens(user._id);
+
+    const loggedInUser = await User.findById(user._id).select("-password -refreshToken");
+
+    const cookiesOptions = {
+        httpOnly: true,
+        maxAge: 30 * 24 * 60 * 60 * 1000,
+        secure: true,
+    };
+
+    // Determine the dashboard URL based on the user's role
+    let dashboardUrl;
+    if (user.role === 'seller') {
+        dashboardUrl = '/seller-dashboard';
+    } else if (user.role === 'buyer') {
+        dashboardUrl = '/buyer-dashboard';
+    } else {
+        dashboardUrl = '/default-dashboard';
+    }
+
+    return res
+        .status(200)
+        .cookie("accessToken", accessToken, cookiesOptions)
+        .cookie("refreshToken", refreshToken, cookiesOptions)
+        .json(
+            new ApiResponse(
+                200,
+                { user: loggedInUser, dashboardUrl },
+                "Logged in successfully"
+            )
+        );
+});
 
 
 export {registerUser}

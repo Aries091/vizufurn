@@ -31,10 +31,11 @@ const userSchema = new Schema({
     },
     refreshToken:{
         type:String
-    }
-    
-
-
+    },
+    role: {
+         type: String, 
+         enum: ['customer', 'seller'], 
+         default: 'customer' }
 },{timestamps:true})
 
 userSchema.pre("save",async function (next){
