@@ -13,6 +13,7 @@ const Signup = () => {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [role, setRole] = useState('customer');
   const [secureTextEntry, setSecureTextEntry] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
   const [animation] = useState(new Animated.Value(0));
@@ -24,7 +25,7 @@ const Signup = () => {
   };
 
   const handleSignUp = async () => {
-    if (!fullName || !username || !email || !password) {
+    if (!fullName || !username || !email || !password || !role) {
       setErrorMessage('Please enter all the fields');
       shakeAnimation();
       return;
@@ -40,11 +41,12 @@ const Signup = () => {
     setIsLoading(true);
 
     try {
-      const response = await axios.post('http://localhost:8000/api/v1/users/register', {
+      const response = await axios.post('http://192.168.1.71:8000/api/v1/users/register', {
         fullName,
         username,
         email,
-        password
+        password,
+        role
       });
 
       if (response.status === 201) {
@@ -58,14 +60,10 @@ const Signup = () => {
     } catch (error) {
       if (axios.isAxiosError(error)) {
         if (error.response) {
-          // The request was made and the server responded with a status code
-          // that falls out of the range of 2xx
           setErrorMessage(error.response.data.message || 'Registration failed. Please try again.');
         } else if (error.request) {
-          // The request was made but no response was received
           setErrorMessage('No response from server. Please check your internet connection.');
         } else {
-          // Something happened in setting up the request that triggered an Error
           setErrorMessage('An error occurred. Please try again.');
         }
       } else {
@@ -172,6 +170,24 @@ const Signup = () => {
             </TouchableOpacity>
           </View>
 
+          <View style={styles.roleContainer}>
+            <Text style={styles.roleLabel}>Select Role:</Text>
+            <View style={styles.roleButtonContainer}>
+              <TouchableOpacity
+                style={[styles.roleButton, role === 'customer' && styles.activeRoleButton]}
+                onPress={() => setRole('customer')}
+              >
+                <Text style={[styles.roleButtonText, role === 'customer' && styles.activeRoleButtonText]}>Customer</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.roleButton, role === 'seller' && styles.activeRoleButton]}
+                onPress={() => setRole('seller')}
+              >
+                <Text style={[styles.roleButtonText, role === 'seller' && styles.activeRoleButtonText]}>Seller</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
           {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
 
           <TouchableOpacity 
@@ -242,6 +258,39 @@ const styles = StyleSheet.create({
   },
   eyeIcon: {
     padding: 10,
+  },
+  roleContainer: {
+    width: '100%',
+    marginBottom: 20,
+  },
+  roleLabel: {
+    color: '#fff',
+    fontSize: 16,
+    marginBottom: 10,
+  },
+  roleButtonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  roleButton: {
+    flex: 1,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 25,
+    borderWidth: 1,
+    borderColor: '#fff',
+    marginHorizontal: 5,
+  },
+  activeRoleButton: {
+    backgroundColor: '#fff',
+  },
+  roleButtonText: {
+    color: '#fff',
+    textAlign: 'center',
+    fontSize: 16,
+  },
+  activeRoleButtonText: {
+    color: '#4c669f',
   },
   errorText: {
     color: '#ff6b6b',

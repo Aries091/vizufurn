@@ -4,25 +4,62 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import axios from "axios";
 
 export default function Login() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const [email, setEmail] = useState("");
+  const [emailOrUsername, setEmailOrUsername] = useState("");
   const [password, setPassword] = useState("");
   const [secureTextEntry, setSecureTextEntry] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const [animation] = useState(new Animated.Value(0));
 
-  const handleContinue = () => {
-    if (!email || !password) {
+ 
+
+  const handleContinue = async () => {
+    if (!emailOrUsername || !password) {
       setErrorMessage("Please enter both email and password");
       shakeAnimation();
       return;
     }
-    setErrorMessage("");
-    router.navigate("/home");
+  
+    try {
+      const response = await axios.post('http://192.168.1.71:8000/api/v1/users/login', {
+        email: emailOrUsername,
+        password: password
+      });
+  
+      if (response.status === 200) {
+        // Login successful, navigate to home or store tokens
+        router.navigate("/home");
+      } else {
+        setErrorMessage("Invalid login credentials");
+        shakeAnimation();
+      }
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        if (error.response) {
+        
+          setErrorMessage(error.response.data.message || 'Invalid Email or password');
+        } else if (error.request) {
+
+          setErrorMessage('No response from server. Please check your internet connection.');
+        } else {
+         
+          setErrorMessage('An error occurred. Please try again.');
+        }
+      } else {
+        setErrorMessage('An unexpected error occurred. Please try again.');
+      }
+      shakeAnimation();
+    } finally {
+      setIsLoading(false);
+    }
   };
+  
+   
 
   const handleSignUp = () => {
     router.navigate("/signup");
@@ -62,11 +99,11 @@ export default function Login() {
             <Ionicons name="mail-outline" size={24} color="#fff" style={styles.inputIcon} />
             <TextInput
               style={styles.input}
-              placeholder="Email"
+              placeholder="Email or Username"
               placeholderTextColor="#ccc"
-              value={email}
+              value={emailOrUsername }
               onChangeText={(text) => {
-                setEmail(text);
+                setEmailOrUsername(text);
                 if (errorMessage) setErrorMessage("");
               }}
               inputMode="email"
