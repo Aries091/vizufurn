@@ -6,6 +6,13 @@ import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import axios from "axios";
 
+const COLORS = {
+  background: '#FAF7F0',
+  secondary: '#D8D2C2',
+  accent: '#B17457',
+  text: '#4A4947',
+};
+
 export default function Login() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -16,8 +23,6 @@ export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const [animation] = useState(new Animated.Value(0));
 
- 
-
   const handleContinue = async () => {
     if (!emailOrUsername || !password) {
       setErrorMessage("Please enter both email and password");
@@ -26,6 +31,7 @@ export default function Login() {
     }
   
     try {
+      setIsLoading(true);
       const response = await axios.post('http://192.168.1.71:8000/api/v1/users/login', {
         email: emailOrUsername,
         password: password
@@ -33,7 +39,7 @@ export default function Login() {
   
       if (response.status === 200) {
         // Login successful, navigate to home or store tokens
-        router.navigate("/home");
+        router.navigate("/c_home");
       } else {
         setErrorMessage("Invalid login credentials");
         shakeAnimation();
@@ -41,13 +47,10 @@ export default function Login() {
     } catch (error) {
       if (axios.isAxiosError(error)) {
         if (error.response) {
-        
           setErrorMessage(error.response.data.message || 'Invalid Email or password');
         } else if (error.request) {
-
           setErrorMessage('No response from server. Please check your internet connection.');
         } else {
-         
           setErrorMessage('An error occurred. Please try again.');
         }
       } else {
@@ -58,8 +61,6 @@ export default function Login() {
       setIsLoading(false);
     }
   };
-  
-   
 
   const handleSignUp = () => {
     router.navigate("/signup");
@@ -87,21 +88,21 @@ export default function Login() {
 
   return (
     <LinearGradient
-      colors={['#4c669f', '#3b5998', '#192f6a']}
+      colors={[COLORS.background, COLORS.secondary]}
       style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}
     >
       <Pressable style={styles.dismissKeyboard} onPress={Keyboard.dismiss}>
         <Animated.View style={[styles.formContainer, { transform: [{ translateX: animation }] }]}>
-          <Text style={styles.title}>WELCOME</Text>
-          <Text style={styles.subtitle}>Enter your login credentials</Text>
+          <Text style={styles.title}>Welcome Back</Text>
+          <Text style={styles.subtitle}>Sign in to your account</Text>
 
           <View style={styles.inputContainer}>
-            <Ionicons name="mail-outline" size={24} color="#fff" style={styles.inputIcon} />
+            <Ionicons name="mail-outline" size={24} color={COLORS.accent} style={styles.inputIcon} />
             <TextInput
               style={styles.input}
               placeholder="Email or Username"
-              placeholderTextColor="#ccc"
-              value={emailOrUsername }
+              placeholderTextColor={COLORS.text + '80'}
+              value={emailOrUsername}
               onChangeText={(text) => {
                 setEmailOrUsername(text);
                 if (errorMessage) setErrorMessage("");
@@ -112,11 +113,11 @@ export default function Login() {
           </View>
 
           <View style={styles.inputContainer}>
-            <Ionicons name="lock-closed-outline" size={24} color="#fff" style={styles.inputIcon} />
+            <Ionicons name="lock-closed-outline" size={24} color={COLORS.accent} style={styles.inputIcon} />
             <TextInput
               style={styles.input}
               placeholder="Password"
-              placeholderTextColor="#ccc"
+              placeholderTextColor={COLORS.text + '80'}
               value={password}
               onChangeText={(text) => {
                 setPassword(text);
@@ -129,7 +130,7 @@ export default function Login() {
               <Ionicons
                 name={secureTextEntry ? 'eye-off-outline' : 'eye-outline'}
                 size={24}
-                color="#fff"
+                color={COLORS.accent}
               />
             </Pressable>
           </View>
@@ -141,7 +142,7 @@ export default function Login() {
           {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
 
           <Pressable style={styles.loginButton} onPress={handleContinue}>
-            <Text style={styles.loginButtonText}>Login</Text>
+            <Text style={styles.loginButtonText}>{isLoading ? "Logging in..." : "Login"}</Text>
           </Pressable>
 
           <Pressable onPress={handleSignUp}>
@@ -170,28 +171,33 @@ const styles = StyleSheet.create({
   formContainer: {
     width: '90%',
     maxWidth: 400,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: COLORS.background,
     borderRadius: 20,
-    padding: 20,
+    padding: 30,
     alignItems: 'center',
+    shadowColor: COLORS.text,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 5,
   },
   title: {
     fontSize: 28,
     marginBottom: 8,
     fontWeight: "bold",
-    color: "#fff",
+    color: COLORS.accent,
   },
   subtitle: {
     fontSize: 16,
     marginBottom: 24,
-    color: "#ccc",
+    color: COLORS.text,
   },
   inputContainer: {
     width: '100%',
     flexDirection: 'row',
     alignItems: 'center',
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.3)',
+    borderBottomColor: COLORS.secondary,
     marginBottom: 20,
   },
   inputIcon: {
@@ -199,7 +205,7 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    color: '#fff',
+    color: COLORS.text,
     fontSize: 16,
     paddingVertical: 10,
   },
@@ -207,11 +213,11 @@ const styles = StyleSheet.create({
     padding: 10,
   },
   forgotPasswordContainer: {
-    alignSelf: 'center',
+    alignSelf: 'flex-end',
     marginBottom: 20,
   },
   forgotPasswordText: {
-    color: '#ff9ff3',
+    color: COLORS.accent,
     fontSize: 14,
   },
   errorText: {
@@ -220,24 +226,24 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   loginButton: {
-    backgroundColor: '#fff',
+    backgroundColor: COLORS.accent,
     borderRadius: 25,
     paddingVertical: 12,
     paddingHorizontal: 40,
     marginTop: 10,
   },
   loginButtonText: {
-    color: '#4c669f',
+    color: COLORS.background,
     fontSize: 18,
     fontWeight: 'bold',
   },
   signUpText: {
     marginTop: 20,
-    color: "#fff",
+    color: COLORS.text,
     fontSize: 14,
   },
   signUpLink: {
-    color: "#ff9ff3",
+    color: COLORS.accent,
     fontWeight: "bold",
   },
 });

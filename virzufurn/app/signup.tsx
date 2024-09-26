@@ -6,6 +6,13 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import axios from 'axios';
 
+const COLORS = {
+  background: '#FAF7F0',
+  secondary: '#D8D2C2',
+  accent: '#B17457',
+  text: '#4A4947',
+};
+
 const Signup = () => {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -51,7 +58,7 @@ const Signup = () => {
 
       if (response.status === 201) {
         // Successful registration
-        router.navigate('/home');
+        router.navigate('/c_home');
       } else {
         // Handle unexpected status codes
         setErrorMessage('An unexpected error occurred. Please try again.');
@@ -94,7 +101,7 @@ const Signup = () => {
 
   return (
     <LinearGradient
-      colors={['#4c669f', '#3b5998', '#192f6a']}
+      colors={[COLORS.background, COLORS.secondary]}
       style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}
     >
       <TouchableOpacity style={styles.dismissKeyboard} onPress={Keyboard.dismiss} activeOpacity={1}>
@@ -102,11 +109,11 @@ const Signup = () => {
           <Text style={styles.title}>Create Account</Text>
 
           <View style={styles.inputContainer}>
-            <Ionicons name="person-outline" size={24} color="#fff" style={styles.inputIcon} />
+            <Ionicons name="person-outline" size={24} color={COLORS.accent} style={styles.inputIcon} />
             <TextInput
               style={styles.input}
               placeholder="Fullname"
-              placeholderTextColor="#ccc"
+              placeholderTextColor={COLORS.text + '80'}
               value={fullName}
               onChangeText={(text) => {
                 setFullName(text);
@@ -117,11 +124,11 @@ const Signup = () => {
           </View>
 
           <View style={styles.inputContainer}>
-            <Ionicons name="at-outline" size={24} color="#fff" style={styles.inputIcon} />
+            <Ionicons name="at-outline" size={24} color={COLORS.accent} style={styles.inputIcon} />
             <TextInput
               style={styles.input}
               placeholder="Username"
-              placeholderTextColor="#ccc"
+              placeholderTextColor={COLORS.text + '80'}
               value={username}
               onChangeText={(text) => {
                 setUsername(text);
@@ -132,11 +139,11 @@ const Signup = () => {
           </View>
 
           <View style={styles.inputContainer}>
-            <Ionicons name="mail-outline" size={24} color="#fff" style={styles.inputIcon} />
+            <Ionicons name="mail-outline" size={24} color={COLORS.accent} style={styles.inputIcon} />
             <TextInput
               style={styles.input}
               placeholder="Email"
-              placeholderTextColor="#ccc"
+              placeholderTextColor={COLORS.text + '80'}
               value={email}
               onChangeText={(text) => {
                 setEmail(text);
@@ -148,11 +155,11 @@ const Signup = () => {
           </View>
 
           <View style={styles.inputContainer}>
-            <Ionicons name="lock-closed-outline" size={24} color="#fff" style={styles.inputIcon} />
+            <Ionicons name="lock-closed-outline" size={24} color={COLORS.accent} style={styles.inputIcon} />
             <TextInput
               style={styles.input}
               placeholder="Password"
-              placeholderTextColor="#ccc"
+              placeholderTextColor={COLORS.text + '80'}
               value={password}
               onChangeText={(text) => {
                 setPassword(text);
@@ -165,7 +172,7 @@ const Signup = () => {
               <Ionicons
                 name={secureTextEntry ? 'eye-off-outline' : 'eye-outline'}
                 size={24}
-                color="#fff"
+                color={COLORS.accent}
               />
             </TouchableOpacity>
           </View>
@@ -196,7 +203,7 @@ const Signup = () => {
             disabled={isLoading}
           >
             {isLoading ? (
-              <ActivityIndicator color="#4c669f" />
+              <ActivityIndicator color={COLORS.background} />
             ) : (
               <Text style={styles.signupButtonText}>Sign Up</Text>
             )}
@@ -228,23 +235,28 @@ const styles = StyleSheet.create({
   formContainer: {
     width: '90%',
     maxWidth: 400,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: COLORS.background,
     borderRadius: 20,
-    padding: 20,
+    padding: 30,
     alignItems: 'center',
+    shadowColor: COLORS.text,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 5,
   },
   title: {
     fontSize: 28,
     marginBottom: 24,
     fontWeight: 'bold',
-    color: '#fff',
+    color: COLORS.accent,
   },
   inputContainer: {
     width: '100%',
     flexDirection: 'row',
     alignItems: 'center',
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.3)',
+    borderBottomColor: COLORS.secondary,
     marginBottom: 20,
   },
   inputIcon: {
@@ -252,7 +264,7 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    color: '#fff',
+    color: COLORS.text,
     fontSize: 16,
     paddingVertical: 10,
   },
@@ -264,7 +276,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   roleLabel: {
-    color: '#fff',
+    color: COLORS.text,
     fontSize: 16,
     marginBottom: 10,
   },
@@ -278,19 +290,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     borderRadius: 25,
     borderWidth: 1,
-    borderColor: '#fff',
+    borderColor: COLORS.accent,
     marginHorizontal: 5,
   },
   activeRoleButton: {
-    backgroundColor: '#fff',
+    backgroundColor: COLORS.accent,
   },
   roleButtonText: {
-    color: '#fff',
+    color: COLORS.accent,
     textAlign: 'center',
     fontSize: 16,
   },
   activeRoleButtonText: {
-    color: '#4c669f',
+    color: COLORS.background,
   },
   errorText: {
     color: '#ff6b6b',
@@ -298,7 +310,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   signupButton: {
-    backgroundColor: '#fff',
+    backgroundColor: COLORS.accent,
     borderRadius: 25,
     paddingVertical: 12,
     paddingHorizontal: 40,
@@ -308,17 +320,17 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   signupButtonText: {
-    color: '#4c669f',
+    color: COLORS.background,
     fontSize: 18,
     fontWeight: 'bold',
   },
   loginText: {
     marginTop: 20,
-    color: '#fff',
+    color: COLORS.text,
     fontSize: 14,
   },
   loginLink: {
-    color: '#ff9ff3',
+    color: COLORS.accent,
     fontWeight: 'bold',
   },
 });
