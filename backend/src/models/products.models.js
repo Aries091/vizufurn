@@ -28,8 +28,12 @@ const productSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  image: {
-    type: String,  // Assume URL to image
+  displayImage: {
+    type: String,  // URL to image
+    required: true
+  },
+  modelImage: {
+    type: String,  // URL to 3D model image
     required: true
   },
   stock: {
@@ -41,11 +45,14 @@ const productSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Category',
     required: true
+  },
+  seller: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
   }
 }, { timestamps: true });
 
 // Create the models
-const Category = mongoose.model('Category', categorySchema);
-const Product = mongoose.model('Product', productSchema);
-
-module.exports = { Category, Product };
+export const Category = mongoose.model('Category', categorySchema);
+export const Product = mongoose.model('Product', productSchema);
