@@ -1,19 +1,6 @@
-import mongoose from 'mongoose'
+import mongoose from 'mongoose';
+import { CATEGORIES } from '../Constant/categories.js';
 
-// Define the Category schema
-const categorySchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: true,
-    trim: true
-  },
-  description: {
-    type: String,
-    required: false
-  },
-}, { timestamps: true });
-
-// Define the Product schema
 const productSchema = new mongoose.Schema({
   name: {
     type: String,
@@ -42,8 +29,8 @@ const productSchema = new mongoose.Schema({
     default: 0
   },
   category: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Category',
+    type: String,
+    enum: Object.values(CATEGORIES),
     required: true
   },
   seller: {
@@ -53,6 +40,4 @@ const productSchema = new mongoose.Schema({
   }
 }, { timestamps: true });
 
-// Create the models
-export const Category = mongoose.model('Category', categorySchema);
 export const Product = mongoose.model('Product', productSchema);
