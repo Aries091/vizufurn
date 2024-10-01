@@ -32,7 +32,7 @@ export default function Login() {
   
     try {
       setIsLoading(true);
-      const response = await axios.post('http://192.168.1.71:8000/api/v1/users/login', {
+      const response = await axios.post('http://192.168.16.105:8000/api/v1/users/login', {
         email: emailOrUsername,
         password: password
       });

@@ -65,6 +65,26 @@ const Home = () => {
           </TouchableOpacity>
         ))}
       </ScrollView>
+
+      {/* Bottom Navigation */}
+      <View style={styles.bottomNav}>
+        <TouchableOpacity style={styles.navItem}>
+          <Icon name="home" type="feather" size={24} color={COLORS.accent} />
+          <Text style={styles.navText}>Home</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.navItem}>
+          <Icon name="search" type="feather" size={24} color={COLORS.text} />
+          <Text style={styles.navText}>Search</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.navItem}>
+          <Icon name="heart" type="feather" size={24} color={COLORS.text} />
+          <Text style={styles.navText}>Favorites</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.navItem}>
+          <Icon name="user" type="feather" size={24} color={COLORS.text} />
+          <Text style={styles.navText}>Profile</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };
@@ -152,6 +172,27 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     color: COLORS.text,
+  },
+  bottomNav: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    backgroundColor: COLORS.secondary,
+    paddingVertical: 10,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+  },
+  navItem: {
+    alignItems: 'center',
+  },
+  navText: {
+    color: COLORS.text,
+    fontSize: 12,
+    marginTop: 5,
   },
 });
 
