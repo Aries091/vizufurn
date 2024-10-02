@@ -13,9 +13,9 @@ const publishProduct = asyncHandler(async (req, res) => {
         console.log("Request body:", req.body);
         console.log("Files:", req.files);
 
-        if (!req.user || !req.user._id) {
-            throw new ApiError(401, "User not authenticated");
-        }
+        // if (!req.user || !req.user._id) {
+        //     throw new ApiError(401, "User not authenticated");
+        // }
 
         const { name, description, price, category } = req.body;
         
@@ -74,5 +74,10 @@ const publishProduct = asyncHandler(async (req, res) => {
         return res.status(500).json(new ApiResponse(500, null, "Internal Server Error"));
     }
 });
+const deleteProduct = asyncHandler(async(req,res)=>{
+
+
+})
+
 
 export { publishProduct };

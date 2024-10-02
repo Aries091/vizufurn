@@ -7,7 +7,7 @@ const router = Router();
 
 router.route('/publishProduct')
     .post(
-        verifyJWT,
+        // verifyJWT,
         upload.fields([
             { name: 'displayImage', maxCount: 1 },
             { name: 'modelImage', maxCount: 1 }
