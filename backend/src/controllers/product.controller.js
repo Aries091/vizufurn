@@ -5,17 +5,13 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { CATEGORIES } from '../Constant/categories.js';
 
+
 const publishProduct = asyncHandler(async (req, res) => {
     try {
         console.log("Starting publishProduct function");
 
-        // Debugging: log request body and files
         console.log("Request body:", req.body);
         console.log("Files:", req.files);
-
-        // if (!req.user || !req.user._id) {
-        //     throw new ApiError(401, "User not authenticated");
-        // }
 
         const { name, description, price, category } = req.body;
         
@@ -23,12 +19,10 @@ const publishProduct = asyncHandler(async (req, res) => {
             throw new ApiError(400, "Please fill all fields");
         }
 
-        // Check if the category is valid
         if (!Object.values(CATEGORIES).includes(category)) {
             throw new ApiError(400, "Invalid category");
         }
 
-        // Check if images are provided
         const displayImageLocalPath = req.files?.displayImage?.[0]?.path;
         const modelImageLocalPath = req.files?.modelImage?.[0]?.path;
 
@@ -39,7 +33,6 @@ const publishProduct = asyncHandler(async (req, res) => {
             throw new ApiError(400, "Please upload a model image");
         }
 
-        // Upload images to Cloudinary
         console.log("Uploading images to Cloudinary");
         const displayImage = await uploadOnCloudinary(displayImageLocalPath);
         const modelImage = await uploadOnCloudinary(modelImageLocalPath);
@@ -51,14 +44,15 @@ const publishProduct = asyncHandler(async (req, res) => {
             throw new ApiError(400, "Failed to upload images");
         }
 
-        // Create product in the database
         const product = await Product.create({
             name,
             description,
             price,
             displayImage: displayImage.url,
             modelImage: modelImage.url,
-            seller: req.user._id,
+            // Remove the seller field if it's required in your schema
+            // If it's optional, you can set it to null or remove it
+            // seller: null,
             stock: req.body.stock || 0,
             category,
         });
@@ -74,10 +68,4 @@ const publishProduct = asyncHandler(async (req, res) => {
         return res.status(500).json(new ApiResponse(500, null, "Internal Server Error"));
     }
 });
-const deleteProduct = asyncHandler(async(req,res)=>{
-
-
-})
-
-
 export { publishProduct };
