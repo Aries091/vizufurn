@@ -14,6 +14,12 @@ const publishProduct = asyncHandler(async (req, res) => {
         console.log("Files:", req.files);
 
         const { name, description, price, category } = req.body;
+        console.log("Extracted fields:", { name, description, price, category });
+
+        if (!name) console.log("Name is missing");
+        if (!description) console.log("Description is missing");
+        if (!price) console.log("Price is missing");
+        if (!category) console.log("Category is missing");
         
         if (!name || !description || !price || !category) {
             throw new ApiError(400, "Please fill all fields");
@@ -102,7 +108,7 @@ const deleteProduct =asyncHandler(async(req,res)=>{
 const updateProduct = asyncHandler(async(req,res)=>{
     try{
         const{productId}=req.params;
-        const {name,description,price,stock}=req.body;
+        const {name,description,price,stock,category}=req.body;
         if(!productId){
             throw new ApiError(400, "Product ID is required");
         }
@@ -155,4 +161,4 @@ const updateProduct = asyncHandler(async(req,res)=>{
 })
 
 
-export { publishProduct,deleteProduct };
+export { publishProduct,deleteProduct,updateProduct};

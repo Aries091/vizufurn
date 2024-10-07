@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { publishProduct } from '../controllers/product.controller.js';
+import { deleteProduct, publishProduct } from '../controllers/product.controller.js';
 import { upload } from '../middlewares/multer.middleware.js';
 import { verifyJWT } from '../middlewares/auth.middleware.js';
 
@@ -14,5 +14,6 @@ router.route('/publishProduct')
         ]),
         publishProduct
     );
+    router.route('/:productId').delete(deleteProduct);
 
 export default router;
