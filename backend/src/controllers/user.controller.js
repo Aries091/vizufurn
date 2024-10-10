@@ -1,31 +1,28 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
-import {ApiError} from "../utils/ApiError.js"
-import {User} from "../models/user.models.js"
-// import {uploadOnCloudinary} from "../utils/claudinary.js"
-import {ApiResponse} from "../utils/ApiResponse.js"
-import jwt from "jsonwebtoken"
+import { ApiError } from "../utils/ApiError.js";
+import { User } from "../models/user.models.js";
+import { ApiResponse } from "../utils/ApiResponse.js";
+import jwt from "jsonwebtoken";
 
-
-
-const generateAccessAndRefereshTokens = async(userId) =>{
+const generateAccessAndRefereshTokens = async(userId) => {
     try {
-        const user = await User.findById(userId)
+        const user = await User.findById(userId);
+        if (!user) {
+            throw new ApiError(404, "User not found");
+        }
    
-        const accessToken = user.generateAccessToken()
+        const accessToken = user.generateAccessToken();
+        const refreshToken = user.generateRefreshToken();
         
-        const refreshToken = user.generateRefreshToken()
-        
-        user.refreshToken = refreshToken
-        await user.save({ validateBeforeSave: false })
+        user.refreshToken = refreshToken;
+        await user.save({ validateBeforeSave: false });
 
-        return {accessToken, refreshToken}
-
-
+        return { accessToken, refreshToken };
     } catch (error) {
-        throw new ApiError(500, "Something went wrong while generating referesh and access token")
+        console.error("Token generation error:", error);
+        throw new ApiError(500, "Something went wrong while generating refresh and access tokens");
     }
 }
-
 
 const registerUser = asyncHandler(async (req, res) => {
     const { fullName, username, email, password, role } = req.body;
@@ -53,8 +50,7 @@ const registerUser = asyncHandler(async (req, res) => {
         throw new ApiError(409, "Username or email already exists");
     }
 
-    // Make sure username is defined before calling toLowerCase()
-    const lowercaseUsername = username ? username.toLowerCase() : "";
+    const lowercaseUsername = username.toLowerCase();
 
     const user = await User.create({
         fullName,
@@ -64,59 +60,70 @@ const registerUser = asyncHandler(async (req, res) => {
         role
     });
 
+    const { accessToken, refreshToken } = await generateAccessAndRefereshTokens(user._id);
+
     const createdUser = await User.findById(user._id).select(
-        "-password -refreshToken"
+        "-password"
     );
 
     if (!createdUser) {
         throw new ApiError(500, "Something went wrong while registering");
     }
 
-    return res.status(201).json(
-        new ApiResponse(200, createdUser, "Registered successfully")
-    );
-});
-
-
-
-const loginUser = asyncHandler(async (req, res) => {
-    const { email, username, password } = req.body;
-
-    if (!username && !email) {
-        throw new ApiError(400, "Either email or username is required");
-    }
-
-    const user = await User.findOne({
-        $or: [{ email }, { username }]
-    });
-
-    if (!user) {
-        throw new ApiError(401, "User has not been registered");
-    }
-
-    const isPasswordValid = await user.isPasswordCorrect(password);
-    if (!isPasswordValid) {
-        throw new ApiError(401, "Invalid password");
-    }
-
-    const { accessToken, refreshToken } = await generateAccessAndRefereshTokens(user._id);
-
-    const loggedInUser = await User.findById(user._id).select("-password -refreshToken");
+    const dashboardUrl = createdUser.getDashboardUrl();
 
     const cookiesOptions = {
         httpOnly: true,
-        maxAge: 30 * 24 * 60 * 60 * 1000,
-        secure: true,
+        secure: process.env.NODE_ENV === 'production'
     };
 
-    // Determine the dashboard URL based on the user's role
-    let dashboardUrl;
-    if (user.role === 'seller') {
-        dashboardUrl = '/seller-dashboard';
-    } else if (user.role === 'buyer') {
-        dashboardUrl = '/buyer-dashboard';
-    } else {
-        dashboardUrl = '/default-dashboard';
+    return res
+        .status(201)
+        .cookie("accessToken", accessToken, cookiesOptions)
+        .cookie("refreshToken", refreshToken, cookiesOptions)
+        .json(
+            new ApiResponse(201, 
+                {
+                    user: createdUser,
+                    accessToken,
+                    refreshToken,
+                    dashboardUrl
+                }, 
+                "User registered successfully")
+        );
+});
+
+// ... (rest of the c
+const loginUser = asyncHandler(async (req, res) => {
+    const {email, username, password} = req.body
+
+    if (!username && !email) {
+        throw new ApiError(400, "Username or email is required")
+    }
+
+    const user = await User.findOne({
+        $or: [{email}, {username}]
+    })
+
+    if (!user) {
+        throw new ApiError(401, "Invalid credentials")
+    }
+
+    const isPasswordValid = await user.isPasswordCorrect(password)
+    if (!isPasswordValid) {
+        throw new ApiError(401, "Invalid credentials")
+    }
+
+    const {accessToken, refreshToken} = await generateAccessAndRefereshTokens(user._id)
+
+    const loggedInUser = await User.findById(user._id).select("-password -refreshToken")
+    
+    // Get dashboard URL using the new method
+    const dashboardUrl = loggedInUser.getDashboardUrl()
+
+    const cookiesOptions = {
+        httpOnly: true,
+        secure: process.env.NODE_ENV 
     }
 
     return res
@@ -125,25 +132,87 @@ const loginUser = asyncHandler(async (req, res) => {
         .cookie("refreshToken", refreshToken, cookiesOptions)
         .json(
             new ApiResponse(
-                200,
-                { user: loggedInUser, dashboardUrl },
+                200, 
+                {
+                    user: loggedInUser,
+                    accessToken,
+                    refreshToken,
+                    dashboardUrl
+                },
                 "Logged in successfully"
             )
-        );
+        )
+})
+
+const logoutUser = asyncHandler(async(req, res) => {
+    await User.findByIdAndUpdate(
+        req.user._id,
+        {
+            $unset: {
+                refreshToken: 1
+            }
+        },
+        {
+            new: true
+        }
+    );
+    
+    const cookiesOptions = {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production'
+    };
+
+    return res
+        .status(200)
+        .clearCookie("accessToken", cookiesOptions)
+        .clearCookie("refreshToken", cookiesOptions)
+        .json(new ApiResponse(200, {}, "Logged out successfully"));
 });
 
-// const changeCurrentPassword = asyncHandler(async(req,res)=>{
-//     const {oldPassword, newPassword, confirmPassword} = req.body;
-//     const user = await User.findById(req.user?._id);
-//     const isPasswordCorrect=await user.isPasswordCorrect(oldPassword);
-//     if(!isPasswordCorrect){
-//         throw new ApiError(401, "Invalid old password");
-//     }
-//     user.password=newPassword
-//     await user.save({validateBeforeSave:false})
-//     return res.status(200).json(new ApiResponse(200, {}, "Password changed successfully"));
-// })
+const refreshAccessToken = asyncHandler(async(req, res) => {
+    const incomingRefreshToken = req.cookies.refreshToken || req.body.refreshToken;
+    
+    if (!incomingRefreshToken) {
+        throw new ApiError(401, "Unauthorized request: No refresh token");
+    }
+    
+    try {
+        const decodedToken = jwt.verify(
+            incomingRefreshToken,
+            process.env.REFRESH_TOKEN_SECRET
+        );
+        
+        const user = await User.findById(decodedToken?.userId);
+        if (!user) {
+            throw new ApiError(401, "Invalid refresh token: User not found");
+        }
+        
+        if (incomingRefreshToken !== user?.refreshToken) {
+            throw new ApiError(401, "Refresh token is expired or used");
+        }
+        
+        const { accessToken, refreshToken: newRefreshToken } = 
+            await generateAccessAndRefereshTokens(user._id);
+        
+        const cookiesOptions = {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production'
+        };
+        
+        return res 
+            .status(200)
+            .cookie("accessToken", accessToken, cookiesOptions)
+            .cookie("refreshToken", newRefreshToken, cookiesOptions)
+            .json(
+                new ApiResponse(
+                    200,
+                    { accessToken, refreshToken: newRefreshToken },
+                    "Access token refreshed successfully"
+                )
+            );
+    } catch (error) {
+        throw new ApiError(401, error?.message || "Invalid refresh token");
+    }
+});
 
-
-export {registerUser}
-export{loginUser}
+export { registerUser, loginUser, logoutUser, refreshAccessToken };

@@ -1,76 +1,93 @@
-import mongoose ,{Schema} from "mongoose"
+import mongoose, {Schema} from "mongoose"
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 
 const userSchema = new Schema({
-
-    fullName:{
-        type:String,
-        required:true,
-        trim:true,
-        index:true
+    fullName: {
+        type: String,
+        required: true,
+        trim: true,
+        index: true
     },
-    email:{
-        type:String,
-        required:true,
-        trim:true,
-        unique:true,
-        lowercase:true
+    email: {
+        type: String,
+        required: true,
+        trim: true,
+        unique: true,
+        lowercase: true
     },
-    password:{
-        type:String,
-        required:[true,'password is required']
+    password: {
+        type: String,
+        required: [true, 'Password is required']
     },
     username: {
-        type:String,
-        required:true,
+        type: String,
+        required: true,
         unique: true,
-        lowercase:true,
-        trim:true,
-        index:true
+        lowercase: true,
+        trim: true,
+        index: true
     },
-    refreshToken:{
-        type:String
+    refreshToken: {
+        type: String
     },
     role: {
-         type: String, 
-         enum: ['customer', 'seller'], 
-         default: 'customer' }
-},{timestamps:true})
+        type: String,
+        enum: ['customer', 'seller'],
+        default: 'customer',
+        required: true
+    }
+}, {timestamps: true})
 
-userSchema.pre("save",async function (next){
-  if(!this.isModified("password"))
-      return next();
-
-   this.password =await bcrypt.hash(this.password,10)
-   next()
+userSchema.pre("save", async function (next) {
+    if(!this.isModified("password")) return next();
+    
+    this.password = await bcrypt.hash(this.password, 10)
+    next()
 })
 
-userSchema.methods.isPasswordCorrect=async function (password) {
-   return await bcrypt.compare(password,this.password)
+userSchema.methods.isPasswordCorrect = async function (password) {
+    return await bcrypt.compare(password, this.password)
 }
 
-userSchema.methods.generateAccessToken=function(){
-  return jwt.sign({
-      _id:this._id,
-      email:this.email,
-      username:this.username,
-      fullName: this.fullName
-  },
-  process.env.ACCESS_TOKEN_SECRET,
-  {
-      expiresIn:process.env.ACCESS_TOKEN_EXPIRY
-  }
-)
+userSchema.methods.generateAccessToken = function() {
+    return jwt.sign(
+        {
+            _id: this._id,
+            email: this.email,
+            username: this.username,
+            fullName: this.fullName,
+            role: this.role  // Added role to the token payload
+        },
+        process.env.ACCESS_TOKEN_SECRET,
+        {
+            expiresIn: process.env.ACCESS_TOKEN_EXPIRY
+        }
+    )
 }
-userSchema.methods.generateRefreshToken=function(){
-  return jwt.sign({
-      _id:this._id
-  },
-  process.env.REFRESH_TOKEN_SECRET,
-  {
-      expiresIn:process.env.REFRESH_TOKEN_EXPIRY
-  }
-)
+
+userSchema.methods.generateRefreshToken = function() {
+    return jwt.sign(
+        {
+            _id: this._id,
+        },
+        process.env.REFRESH_TOKEN_SECRET,
+        {
+            expiresIn: process.env.REFRESH_TOKEN_EXPIRY
+        }
+    )
 }
-export const User = mongoose.model("User",userSchema)
+
+// Add a method to get dashboard URL based on role
+userSchema.methods.getDashboardUrl = function() {
+    switch(this.role) {
+        case 'seller':
+            return '/seller-dashboard'
+        case 'customer':
+            return '/customer-dashboard'
+        default:
+            return '/dashboard'
+    }
+}
+
+export const User = mongoose.model("User", userSchema)
