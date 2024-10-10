@@ -25,29 +25,40 @@ export default function Login() {
 
   const handleContinue = async () => {
     if (!emailOrUsername || !password) {
-      setErrorMessage("Please enter both email and password");
+      setErrorMessage("Please enter both email/username and password");
       shakeAnimation();
       return;
     }
   
     try {
       setIsLoading(true);
-      const response = await axios.post('http://192.168.16.105:8000/api/v1/users/login', {
-        email: emailOrUsername,
+      const response = await axios.post('http://192.168.1.84:8000/api/v1/users/login', {
+        email: emailOrUsername, // The backend accepts both email and username
+        username: emailOrUsername, // Send both, the backend will check which one is provided
         password: password
       });
   
-      if (response.status === 200) {
-        // Login successful, navigate to home or store tokens
-        router.navigate("/c_home");
-      } else {
-        setErrorMessage("Invalid login credentials");
-        shakeAnimation();
+      if (response.data.statusCode === 200) {
+        // Login successful
+        const { user, accessToken, refreshToken, dashboardUrl } = response.data.data;
+        
+        // Store tokens securely (you might want to use AsyncStorage or a more secure method)
+        // AsyncStorage.setItem('accessToken', accessToken);
+        // AsyncStorage.setItem('refreshToken', refreshToken);
+        
+        // Navigate based on the user's role
+        if (user.role === 'seller') {
+          router.navigate("/seller-dashboard");
+        } else if (user.role === 'customer') {
+          router.navigate("/customer_dash");
+        } else {
+          router.navigate("/c_home"); // Default route if role is not recognized
+        }
       }
     } catch (error) {
       if (axios.isAxiosError(error)) {
         if (error.response) {
-          setErrorMessage(error.response.data.message || 'Invalid Email or password');
+          setErrorMessage(error.response.data.message || 'Invalid credentials');
         } else if (error.request) {
           setErrorMessage('No response from server. Please check your internet connection.');
         } else {

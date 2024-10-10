@@ -48,7 +48,7 @@ const Signup = () => {
     setIsLoading(true);
 
     try {
-      const response = await axios.post('http://192.168.16.105:8000/api/v1/users/register', {
+      const response = await axios.post('http://192.168.1.84:8000/api/v1/users/register', {
         fullName,
         username,
         email,

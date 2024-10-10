@@ -1,7 +1,7 @@
 import { View, Text } from 'react-native'
 import React from 'react'
 
-const customer_dash = () => {
+const seller_dash = () => {
   return (
     <View>
       <Text>customer_dash</Text>
@@ -9,4 +9,4 @@ const customer_dash = () => {
   )
 }
 
-export default customer_dash
+export default seller_dash

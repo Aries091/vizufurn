@@ -10,7 +10,8 @@ export default function RootLayout() {
         <Stack.Screen name="login" />
         <Stack.Screen name="signup" />
         <Stack.Screen name="c_home" />
-
+        <Stack.Screen name="customer_dash" />
+        <Stack.Screen name="seller-dashboard" />
       </Stack>
     </GestureHandlerRootView>
   );
